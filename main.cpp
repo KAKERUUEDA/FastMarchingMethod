@@ -71,11 +71,11 @@ int main(){
     int a = 0;
     for(int i=0; i<fmm.ny+1; i++){
         for(int j=0; j<fmm.nx+1;j++){
-            fmm.T_1D.at(a) = fmm.T.at(j).at(i);
+            fmm.T_1D.at(a) = fmm.T.at(i).at(j);
             a++;
         }
     }
 
     fmm.export_vtu("result.vtu");
-    
+
 }

@@ -16,7 +16,7 @@ class ElementType{
 
 class FMM{
     public:
-    int nx, ny, goal_i, goal_j, tmp, tmp2, size, numOfNode, numOfElm;
+    int nx, ny, goal_i, goal_j, tmp, tmp2, size, numOfNode, numOfElm, loop;
     double Lx, Ly;
     double dx, dy;
     double f;
