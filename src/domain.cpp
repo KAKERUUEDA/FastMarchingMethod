@@ -1,7 +1,7 @@
-#include "lib.h"
-using namespace std;
-void FMM::DefineGrid(){
+#include "../lib/lib.h"
 
+void FMM::DefineGrid()
+{
     nx = 200;
     ny = 200;
     Lx = 1e2;
@@ -10,11 +10,12 @@ void FMM::DefineGrid(){
     dx=Lx/nx;
     dy=Ly/ny;
 
-    numOfNode=(nx+1)*(ny+1);
-    numOfElm=nx*ny;
+    numOfNode = (nx + 1) * (ny + 1);
+    numOfElm = nx * ny;
 
-    ifstream ifs_node("node3.txt");
+    ifstream ifs_node("../../input/node.txt");
     string str1;
+    
     while(getline(ifs_node, str1)){
         istringstream ss(str1);
         string tmp;
@@ -27,42 +28,12 @@ void FMM::DefineGrid(){
     }
     ifs_node.close();
 
-    //for(int i=0; i<x_vessel.size(); i++){
-    //    cout << "x = " << x_vessel.at(i).at(0) << "  y = " << x_vessel.at(i).at(1) << endl;
-    //}
+    Sort();
 
-    Sort_X_Vessel();
-
-    //ofstream outputfile("sort_x.dat");
-    //for(int i=0; i<x_vessel.size(); i++){
-    //    outputfile << "x = " << x_vessel.at(i).at(0) << "  y = " << x_vessel.at(i).at(1) << endl;
-    //}
-    //outputfile.close();
-    //exit(1);
     double v = 1e0;
 
     f = 1e0/v;
-   /*
-    string str;
-    ifstream ifs("goal.dat");
-    int tmp6 = 0;
-   // vector<vector<double>> goal;
-    while(getline(ifs,str)){
-        istringstream ss(str); 
-        string tmp5;
-        vector<double> tmp_goal;
-        goal.emplace_back();
-        for(int j=0; j<2; j++){
-            getline(ss, tmp5, ' ');
-            goal.at(tmp6).push_back(stod(tmp5));
-        }
-        tmp6++;
-    */
-    //cout << "goal1のi" << goal.at(0).at(0) << "  goal1のj" << goal.at(0).at(1) << endl;
-    //cout << "goal2のi" << goal.at(1).at(0) << "  goal2のj" << goal.at(1).at(1) << endl;
-    //exit(1);
 
-    
     x.resize(numOfNode, vector<double>(2, 0));
     T.resize(ny+1, vector<double>(nx+1, 0));
     element.resize(numOfElm);
@@ -95,7 +66,8 @@ void FMM::DefineGrid(){
     
 }
 
-void FMM::Sort_X_Vessel(){
+void FMM::Sort()
+{
     for(int i=0; i<x_vessel.size(); i++){
         if(x_vessel.at(i).at(1) == 0){
             if(x_vessel.at(0).at(1) == 0){
@@ -109,10 +81,6 @@ void FMM::Sort_X_Vessel(){
             }
         }
     }
-
-    //double min_distance;
-    //double pow_xy = pow(x_vessel.at(0).at(0)-x_vessel.at(1).at(0), 2) + pow(x_vessel.at(0).at(1)-x_vessel.at(1).at(1), 2);
-    //min_distance = sqrt(pow_xy);
 
     for(int i=0; i<x_vessel.size(); i++){
  
@@ -148,36 +116,30 @@ void FMM::Sort_X_Vessel(){
     }
 }
 
-void FMM::CrossedVoxel(){
+void FMM::CrossedVoxel()
+{
     for(int i=0; i<element.size(); i++){
-          // cout << "1_0" << endl;
         int count = 0;
         bool test;
         test = LeftLineTest(i);
         if(test){
-            //cout << "Left passed" << endl;
             count++;
         } 
         test = RightLineTest(i);
            if(test){
-            //cout << "Right passed" << endl;
             count++;
         } 
         test = UpperLineTest(i);
            if(test){
-            //cout << "Upper passed" << endl;
             count++;
         } 
         test = BottomLineTest(i);
            if(test){
-            //cout << "Bottom passed" << endl;
             count++;
         } 
         if(count > 0){
             InitialSDFNode(i);
         }else{
-            //cout << "「voxel通過していない」i = " << i << endl;
-            // cout << "1_2" << endl;
             for(int j=0; j<4; j++){
               int mm = element[i].node[j] / (nx+1);
               int nn = element[i].node[j] - mm*(nx+1);
@@ -188,14 +150,6 @@ void FMM::CrossedVoxel(){
         }
     }
 
-    ofstream outputfile("T_initial.dat");
-    for(int i=0; i<nx+1; i++){
-        for(int j=0; j<ny+1; j++){
-            outputfile << "i= " << i << " j= " << j << " T=" << T.at(i).at(j) << endl;
-        }
-    }
-    outputfile.close();
-
     int a = 0;
     for(int i=0; i<ny+1; i++){
         for(int j=0; j<nx+1;j++){
@@ -203,23 +157,6 @@ void FMM::CrossedVoxel(){
             a++;
         }
     }
-
-    export_vtu("result_initial.vtu");
-
-   //exit(1);
-   
-   //for(int i=0; i<ny+1; i++){
-   //     for(int j=0; j<nx+1; j++){
-   //         bool is_goal2 = IsGoal(goal, i, j);
-   //         if(is_goal2){
-   //             T.at(i).at(j) = 0;
-   //             lambda.at(i).at(j) = fix;
-   //         }else{
-   //             T.at(i).at(j) = 1e10;
-   //             lambda.at(i).at(j) = far;
-   //         }
-   //     }
-   // }
 
     for(int i=0; i<ny+1; i++){
         for(int j=0; j<nx+1; j++){
@@ -230,7 +167,8 @@ void FMM::CrossedVoxel(){
     }
 }
 
-bool FMM::LeftLineTest(int _i){
+bool FMM::LeftLineTest(int _i)
+{
   for(int i=0; i<x_vessel.size(); i++){
     if(x_vessel.at(i).at(1)==100) continue;
     double x1 = x.at(element[_i].node[0]).at(0);
@@ -251,13 +189,13 @@ bool FMM::LeftLineTest(int _i){
 
     if(tc*td <= 0 && ta*tb <= 0) {
         return true;
-      //  cout << "left test passed" << endl;
     }
   }
   return false;
 }
 
-bool FMM::RightLineTest(int _i){
+bool FMM::RightLineTest(int _i)
+{
   for(int i=0; i<x_vessel.size(); i++){
     if(x_vessel.at(i).at(1)==100) continue;
     double x1 = x.at(element[_i].node[1]).at(0);
@@ -277,15 +215,6 @@ bool FMM::RightLineTest(int _i){
     double tb = (x3-x4)*(y2-y3)+(y3-y4)*(x3-x2);
 
     if(tc*td <= 0 && ta*tb <= 0){
-    //cout << "x1 = " << x1 << endl;
-    //cout << "x2 = " << x2 << endl;
-    //cout << "y1 = " << y1 << endl;
-    //cout << "y2 = " << y2 << endl;
-    //cout << "x3 = " << x3 << endl;
-    //cout << "x4 = " << x4 << endl;
-    //cout << "y3 = " << y3 << endl;
-    //cout << "y4 = " << y4 << endl;
-        //cout << "right test passed" << endl;
         return true;  
     } 
     
@@ -293,10 +222,10 @@ bool FMM::RightLineTest(int _i){
   return false;
 }
 
-bool FMM::UpperLineTest(int _i){
+bool FMM::UpperLineTest(int _i)
+{
     for(int i=0; i<x_vessel.size(); i++){
       if(x_vessel.at(i).at(1)==100) continue;
-      //cout << "_i = " << _i << endl;
       double x1 = x.at(element[_i].node[3]).at(0);
       double x2 = x.at(element[_i].node[2]).at(0);
       double y1 = x.at(element[_i].node[3]).at(1);
@@ -313,7 +242,6 @@ bool FMM::UpperLineTest(int _i){
       double ta = (x3-x4)*(y1-y3)+(y3-y4)*(x3-x1);
       double tb = (x3-x4)*(y2-y3)+(y3-y4)*(x3-x2);
       if(tc*td <= 0 && ta*tb <= 0){
-        //cout << "upper test passed" << endl;
         return true;  
       } 
     }
@@ -340,7 +268,6 @@ bool FMM::BottomLineTest(int _i){
       double tb = (x3-x4)*(y2-y3)+(y3-y4)*(x3-x2);
 
       if(tc*td <= 0 && ta*tb <= 0){
-       // cout << "bottom test passed" << endl;
         return true;  
       } 
     }
@@ -348,115 +275,9 @@ bool FMM::BottomLineTest(int _i){
 }
 
 
-void FMM::InitialSDFNode(int _i){
-  /*
-    if((_i % nx) != 0 && ((_i+1) % nx) != 0 && _i >= nx && _i < nx*(ny-1)){
-       for(int j=0; j<4; j++){
-          //cout << "1_1_0" << endl;
-         double length1 = minimumDistance(_i-1, j);
-         double length2 = minimumDistance(_i+1, j);
-         double length3 = minimumDistance(_i-nx-1, j);
-         double length4 = minimumDistance(_i-nx, j);
-         double length5 = minimumDistance(_i-nx+1, j);
-         double length6 = minimumDistance(_i+nx-1, j);
-         double length7 = minimumDistance(_i+nx, j);
-         double length8 = minimumDistance(_i+nx+1, j);
-         int m1 = element[_i-1].node[j] / (nx+1);
-         int n1 = element[_i-1].node[j] - m1*(nx+1);
-         int m2 = element[_i+1].node[j] / (nx+1);
-         int n2 = element[_i+1].node[j] - m2*(nx+1);
-         int m3 = element[_i-nx-1].node[j] / (nx+1);
-         int n3 = element[_i-nx-1].node[j] - m3*(nx+1);
-         int m4 = element[_i-nx].node[j] / (nx+1);
-         int n4 = element[_i-nx].node[j] - m4*(nx+1);
-         int m5 = element[_i-nx+1].node[j] / (nx+1);
-         int n5 = element[_i-nx+1].node[j] - m5*(nx+1);
-         int m6 = element[_i+nx-1].node[j] / (nx+1);
-         int n6 = element[_i+nx-1].node[j] - m6*(nx+1);
-         int m7 = element[_i+nx].node[j] / (nx+1);
-         int n7 = element[_i+nx].node[j] - m7*(nx+1);
-         int m8 = element[_i+nx+1].node[j] / (nx+1);
-         int n8 = element[_i+nx+1].node[j] - m8*(nx+1);
-
-         if(lambda.at(m1).at(n1) == fix){
-            continue;
-         }else{
-           T.at(m1).at(n1) = length1;
-           lambda.at(m1).at(n1) = far;
-         }
-
-        if(lambda.at(m2).at(n2) == fix){
-            continue;
-         }else{
-           T.at(m2).at(n2) = length2;
-           lambda.at(m2).at(n2) = far;
-         }
-
-
-        if(lambda.at(m3).at(n3) == fix){
-            continue;
-         }else{
-           T.at(m3).at(n3) = length3;
-           lambda.at(m3).at(n3) = far;
-         }
-
-         if(lambda.at(m4).at(n4) == fix){
-            continue;
-         }else{
-           T.at(m4).at(n4) = length4;
-           lambda.at(m4).at(n4) = far;
-         }
-
-         if(lambda.at(m5).at(n5) == fix){
-            continue;
-         }else{
-           T.at(m5).at(n5) = length5;
-           lambda.at(m5).at(n5) = far;
-         }
-
-        if(lambda.at(m6).at(n6) == fix){
-            continue;
-         }else{
-           T.at(m6).at(n6) = length6;
-           lambda.at(m6).at(n6) = far;
-         }
-
-         if(lambda.at(m7).at(n7) == fix){
-            continue;
-         }else{
-           T.at(m7).at(n7) = length7;
-           lambda.at(m7).at(n7) = far;
-         }
-
-        if(lambda.at(m8).at(n8) == fix){
-            continue;
-         }else{
-           T.at(m8).at(n8) = length8;
-           lambda.at(m8).at(n8) = far;
-         }
-         
-
-         
-         
-         T.at(m2).at(n2) = length2;
-         lambda.at(m2).at(n2) = far;
-         T.at(m3).at(n3) = length3;
-         lambda.at(m3).at(n3) = far;
-         T.at(m4).at(n4) = length4;
-         lambda.at(m4).at(n4) = far;
-         T.at(m5).at(n5) = length5;
-         lambda.at(m5).at(n5) = far;
-         T.at(m6).at(n6) = length6;
-         lambda.at(m6).at(n6) = far;
-         T.at(m7).at(n7) = length7;
-         lambda.at(m7).at(n7) = far;
-         T.at(m8).at(n8) = length8;
-         lambda.at(m8).at(n8) = far;
-       }
-       
-    }*/
+void FMM::InitialSDFNode(int _i)
+{
     for(int j=0; j<4; j++){
-         //cout << "1_1_0" << endl;
         double length;
         length = minimumDistance(_i, j);
         int m = element[_i].node[j] / (nx+1);
@@ -468,7 +289,8 @@ void FMM::InitialSDFNode(int _i){
 
 
 
-double FMM::minimumDistance(int _i, int _j){
+double FMM::minimumDistance(int _i, int _j)
+{
     int tmp_point;
     double min_distance_point;
     double min_distance_point_tmp;
@@ -478,18 +300,15 @@ double FMM::minimumDistance(int _i, int _j){
     tmp_point = 0;
 
     for(int k=0; k<x_vessel.size(); k++){
-
         double pow_tmp = pow(x.at(element[_i].node[_j]).at(0)-x_vessel.at(k).at(0), 2) + pow(x.at(element[_i].node[_j]).at(1)-x_vessel.at(k).at(1), 2);
         min_distance_point_tmp = sqrt(pow_tmp);
 
         if(min_distance_point_tmp < min_distance_point){
             min_distance_point = min_distance_point_tmp;
             tmp_point = k; 
-            //cout << " tmp_point = " << tmp_point << endl;
         }
     }
     if(x_vessel.at(tmp_point).at(1) == 0){
-
         double bc_x = x_vessel.at(tmp_point+1).at(0) - x_vessel.at(tmp_point).at(0);
         double bc_y = x_vessel.at(tmp_point+1).at(1) - x_vessel.at(tmp_point).at(1);
 
@@ -502,31 +321,10 @@ double FMM::minimumDistance(int _i, int _j){
         double s = (bc_x*ba_x+bc_y*ba_y)/pow_bc;
         double ah = sqrt(pow_ba-s*s*pow_bc);
 
-        
         if(s >= 0e0 && 1e0 >= s){
-            if(_i == 2 && _j == 0){
-                cout << "x = " << x.at(element[_i].node[_j]).at(1) << endl;
-                cout << "x_vessel = " <<  x_vessel.at(tmp_point).at(1) << endl;
-                cout << "ba_x = " << ba_x << endl;
-                cout << "ba_y = " << ba_y  << endl;
-                cout << "AB = " << sqrt(pow_ba) << endl;
-                cout << "BH = " << s*sqrt(pow_bc) << endl;
-                cout << "s = " << s << endl;
-                cout << "tmp_point = " << tmp_point << endl;
-                cout << "_i = " << _i << "_j = " << _j << endl;
-                cout << "length is nan" << endl;
-                cout << "ah = " << ah << endl;
-                exit(1);
-            }
-  
-            if(isnan(ah)){
-                cout << "length is nan" << endl;
-                exit(1);
-            }
             return ah;  
         } 
     }else if(x_vessel.at(tmp_point).at(1) == 100){
-        //cout << "1_1_0_2" << endl;
         double bc_x = x_vessel.at(tmp_point).at(0) - x_vessel.at(tmp_point-1).at(0);
         double bc_y = x_vessel.at(tmp_point).at(1) - x_vessel.at(tmp_point-1).at(1);
 
@@ -571,18 +369,11 @@ double FMM::minimumDistance(int _i, int _j){
     return min_distance_point;
 }
 
-bool FMM::IsGoal(vector<vector<int>> &goal,int _i, int _j){
-    
-    //cout << "is_goal_in" << endl;
-    //cout << "goal1のi" << goal.at(0).at(0) << "  goal1のj" << goal.at(0).at(1) << endl;
-    //cout << "goal2のi" << goal.at(1).at(0) << "  goal2のj" << goal.at(1).at(1) << endl;
-    //cout << _i << _j << endl;
-        
+bool FMM::IsGoal(vector<vector<int>> &goal,int _i, int _j)
+{
     auto is = find_if(
         begin(goal), end(goal),
         [&_i, &_j](const auto& row) {
-            //cout << row.at(0) << endl;
-            //exit(1);
             return row.at(0)  == _i && row.at(1) == _j;
         }
     );
@@ -591,49 +382,26 @@ bool FMM::IsGoal(vector<vector<int>> &goal,int _i, int _j){
     }else{
       return true;
     }
-    /*
-    cout << "fuck" << endl;
-    cout << goal.size() << endl;
-
-    for(int i=0; i<goal.size(); i++){
-        if((_i == goal.at(i).at(0)) && (_j == goal.at(i).at(1)) ){
-            return true;
-        }
-    }
-    return false;
-    */
 }
 
 
 
 
 
-void FMM::FastMarchingMethod(){
-   //cout << "1" << endl;
+void FMM::FastMarchingMethod()
+{
     loop = 0;
-    //InitGrid();
     CrossedVoxel();
-    //cout << "2" << endl;
     bool is_empty_H = false;
+
     while(!is_empty_H){
         cout << "loop = " << loop << endl;
-        //cout << "size = " << size << endl;
         DeleteHeap(H, size);
-        //cout << "3" << endl;
         int i = H.at(size).at(1);
         int j = H.at(size).at(2);
         H.erase(H.begin()+size);
-        //cout << "i = " << i << " j = " << j << endl;
         FixGrid(i, j, lambda, T, H);
-        //cout << "size = " << size << endl;
-        if(size==0){
-            ofstream output_T("T.dat");
-            for(int i=0; i<ny+1; i++){
-                for(int j=0; j<nx+1; j++){
-                    output_T << i << " " << j << " " << T.at(i).at(j) << endl;
-                }
-            }
-            output_T.close();
+        if(size == 0){
             is_empty_H = true;
         }
         int a = 0;
@@ -644,43 +412,30 @@ void FMM::FastMarchingMethod(){
           }
         }
 
-        //if(loop < 300) export_vtu("result/result" + to_string(loop) + ".vtu");
         loop++;
-        //if(loop == 3) exit(1);
     }
-    //cout << "3" << endl;
 }
 
 void FMM::UpdateGrid(int _i, int _j){
-    //cout << "update _i = " << _i << endl;
-    //cout << "update _j = " << _j  << endl;
-    //cout << "2_1_1_1" << endl;
     if(_i == nx && _j != ny && _j != 0){
-        //cout << "in1" << endl;
         T_H = T.at(_i-1).at(_j);
         T_V = min(T.at(_i).at(_j-1), T.at(_i).at(_j+1));
     }else if(_j == ny && _i != nx && _i != 0){
-        //cout << "in2" << endl;
         T_H = min(T.at(_i-1).at(_j), T.at(_i+1).at(_j));
         T_V = T.at(_i).at(_j-1);
     }else if(_i == 0 && _j != 0 && _j != nx){
-        //cout << "in3" << endl;
         T_H = T.at(_i+1).at(_j);
         T_V = min(T.at(_i).at(_j-1), T.at(_i).at(_j+1));   
     }else if(_j == 0 && _i != 0 && _i != nx){
-        //cout << "in4" << endl;
         T_H = min(T.at(_i-1).at(_j), T.at(_i+1).at(_j));
         T_V = T.at(_i).at(_j+1);
     }else if(_i == nx && _j == ny){  
-       //cout << "in5" << endl;
         T_H = T.at(_i-1).at(_j);
         T_V = T.at(_i).at(_j-1);
     }else if(_i == 0 && _j == 0){
-        //cout << "in6" << endl;
         T_H = T.at(_i+1).at(_j);
         T_V = T.at(_i).at(_j+1);
     }else if(_i == nx && _j == 0){
-        //cout << "in7" << endl;
         T_H = T.at(_i-1).at(_j);
         T_V = T.at(_i).at(_j+1);
     }else if(_i == 0 && _j == ny){
@@ -691,74 +446,53 @@ void FMM::UpdateGrid(int _i, int _j){
         T_V = min(T.at(_i).at(_j-1), T.at(_i).at(_j+1));  
     }
 
-
-    //cout << "2_1_1_2" << endl;
     if( f > fabs(T_H-T_V)){
         T.at(_i).at(_j) = (T_H+T_V+sqrt(2*pow(f, 2)-pow((T_H-T_V), 2)))/2;
     }else{
         T.at(_i).at(_j) = f + min(T_H, T_V);
-          //cout << "i = " << _i << "  j = " << _j <<  "  TH = " << T_H  << "  TV = " << T_V << endl;
-          //cout << endl;
-          //if(loop > 50) exit(1);
     }
-    //cout << "2_1_1_3" << endl;
 }
 
-void FMM::FixGrid(int _i, int _j, vector<vector<int>>& _lambda, vector<vector<double>>& _T, vector<vector<int>>& _H){
+void FMM::FixGrid(int _i, int _j, vector<vector<int>>& _lambda, vector<vector<double>>& _T, vector<vector<int>>& _H)
+{
     _lambda.at(_i).at(_j) = fix;
     UpdateGrid(_i,_j);
 
-    //cout << "2_1_00" << endl;
-    //cout << "_i = " << _i << "_j = " << _j << endl;
     int step = 0;
 
    for(int i=_i-1; i<=_i+1; i++){
        for(int j=_j-1; j<=_j+1; j++){
-              //cout << "i = " << i << " j = " << j << " step = " << step << endl;
             if(i == nx+1 || j == ny+1 || step == 0 || step == 2 || step == 4 || step == 6 || step == 8 || i < 0 || j < 0){
-                //cout << "skip" << endl;
                 step++;
                 continue;
             }
-            //cout << "i = " << i << " j = " << j << " step = " << step << endl;
-            //bool is_goal = IsGoal(goal, i, j);
 
             if( _lambda.at(i).at(j) != fix){
-                //cout << size << endl;
-                //cout << "i = " << i << " j = " << j << " lambda = " << _lambda.at(i).at(j) << endl;
-                //cout << "2_1_0" << endl;
                 UpdateGrid(i,j);
-                //cout << "2_1_1" << endl;
+
                 if(_lambda.at(i).at(j) == far){
                     _lambda.at(i).at(j) = near;
-                   // cout << "i = " << i << " j = " << j << " lambda = " << _lambda.at(i).at(j) << endl;
-                    //cout << "2_1_2" << endl;
                     
                     H.emplace_back();
+
                     H.at(size).push_back(tmp);
-                    //cout << "2_1_3" << endl;
                     H.at(size).push_back(i);
-                    //cout << "2_1_4" << endl;
                     H.at(size).push_back(j);
-                    //cout << "2_1_5" << endl;
-                    //cout << "size = " << size << "  tmp = " << tmp <<  "  H.at(size).at(0) = " << H.at(size).at(0) << "  H.at(size).at(1) = " <<  H.at(size).at(1)  << "  H.at(size).at(2) = " <<  H.at(size).at(2)  <<  endl;
+
                     tmp++;
                     size++;
                 }else{
-                    //cout << "2_1_6" << endl;
                     UpHeap(H,i,j);
-                    //cout << "2_1_7" << endl;
                 }
             }
             
             step++;
         }
     }
-    //cout << "1_1_5" << endl;
 }
 
-void FMM::InitGrid(){
-
+void FMM::InitGrid()
+{
     for(int i=0; i<ny+1; i++){
         for(int j=0; j<nx+1; j++){
             bool is_goal2 = IsGoal(goal, i, j);
@@ -771,7 +505,6 @@ void FMM::InitGrid(){
             }
         }
     }
-    //cout << "1_1" << endl;
 
     for(int i=0; i<ny+1; i++){
         for(int j=0; j<nx+1; j++){
@@ -780,5 +513,72 @@ void FMM::InitGrid(){
             }
         }
     }
-    //cout << "1_2" << endl;
+}
+
+void FMM::updateT1D()
+{
+    int a = 0;
+    for(int i=0; i<ny+1; i++){
+        for(int j=0; j<nx+1;j++){
+            T_1D.at(a) = T.at(i).at(j);
+            a++;
+        }
+    }
+}
+
+void FMM::export_vtu(const string &file)
+{
+  FILE *fp;
+  if ((fp = fopen(file.c_str(), "w")) == NULL)
+  {
+    cout << file << " open error" << endl;
+    exit(1);
+  }
+
+  fprintf(fp, "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt32\">\n");
+  fprintf(fp, "<UnstructuredGrid>\n");
+  fprintf(fp, "<Piece NumberOfPoints= \"%d\" NumberOfCells= \"%d\" >\n", numOfNode, numOfElm);
+  fprintf(fp, "<Points>\n");
+  int offset = 0;
+  fprintf(fp, "<DataArray type=\"Float64\" Name=\"Position\" NumberOfComponents=\"3\" format=\"ascii\">\n");
+  for(int ic=0;ic<numOfNode;ic++){
+    fprintf(fp,"%e %e 0e0\n",x.at(ic).at(0),x.at(ic).at(1));
+  }
+  fprintf(fp, "</DataArray>\n");
+  fprintf(fp, "</Points>\n");
+
+  fprintf(fp, "<Cells>\n");
+  fprintf(fp, "<DataArray type=\"Int64\" Name=\"connectivity\" format=\"ascii\">\n");
+  for (int i = 0; i < numOfElm; i++){
+    for (int j = 0; j < element[i].node.size(); j++) fprintf(fp, "%d ", element[i].node[j]);
+    fprintf(fp, "\n");
+  }
+  fprintf(fp, "</DataArray>\n");
+  fprintf(fp, "<DataArray type=\"Int64\" Name=\"offsets\" format=\"ascii\">\n");
+  int num = 0;
+  for (int i = 0; i < numOfElm; i++)
+  {
+    num += element[i].node.size();
+    fprintf(fp, "%d\n", num);
+  }
+  
+  fprintf(fp, "</DataArray>\n");
+  fprintf(fp, "<DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n");
+  for (int i = 0; i < numOfElm; i++) fprintf(fp, "%d\n", 5);
+  fprintf(fp, "</DataArray>\n");
+  fprintf(fp, "</Cells>\n");
+  
+
+  fprintf(fp, "<PointData>\n");
+   fprintf(fp, "<DataArray type=\"Float64\" Name=\"T_1D\" NumberOfComponents=\"1\" format=\"ascii\">\n");
+    for(int ic=0;ic<numOfNode;ic++){
+      fprintf(fp,"%e\n",T_1D.at(ic));
+    }
+    fprintf(fp, "</DataArray>\n");
+  fprintf(fp, "</PointData>\n");
+
+  fprintf(fp, "</Piece>\n");
+  fprintf(fp, "</UnstructuredGrid>\n");
+  fprintf(fp, "</VTKFile>\n");
+  fclose(fp);
 }
